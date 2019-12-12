@@ -1,0 +1,43 @@
+
+# Please make this file available to others
+# by sending it to <lirc@bartelmus.de>
+#
+# this config file was automatically generated
+# using lirc-0.9.0(default) on Thu Dec 12 11:29:41 2019
+#
+# contributed by 
+#
+# brand:                       lircd.conf.2
+# model no. of remote control: 
+# devices being controlled by this remote:
+#
+
+begin remote
+
+  name  lircd.conf.2
+  flags RAW_CODES|CONST_LENGTH
+  eps            30
+  aeps          100
+
+  repeat       9035  2250
+  gap          141476
+
+      begin raw_codes
+
+          name KEY_PLAYPAUSE
+             9032    4512     560    1688     584     552
+              552     584     560     552     576    1696
+              552     552     584     552     560    1688
+              584     552     552    1688     584    1688
+              560    1688     552     584     552    1696
+              552    1688     584     552     552    1696
+              584    1688     560     544     584     552
+              560    1688     584     552     552     584
+              560     552     584     544     560     584
+              552    1688     552    1696     584     552
+              552    1688     584    1688     560    1688
+              552
+
+      end raw_codes
+
+end remote

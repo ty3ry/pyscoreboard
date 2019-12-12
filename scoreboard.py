@@ -34,6 +34,8 @@ BLACK = (0, 0, 0)
 GAME_STATUS_PAUSE = 0
 GAME_STATUS_PLAY = 1
 GAME_STATUS_STOP = 2
+GAME_STATUS_FINISH = 3
+GAME_STATUS_IDLE = 4
 
 # score limit
 GAME_SCORE_LIMIT = 100
@@ -73,12 +75,13 @@ red_score = 0
 blue_score = 0
 game_time = 0
 serv_pos = 0
-game_status = 0
+game_status = 1
 str_game_status = ""
 update_score = 0
 game_state_play = 0
 power_status = 0        # 0 : power off     1 : power on
 is_game_done = 0
+ser_pos_count = 0
 
 
 '''
@@ -109,7 +112,7 @@ game_status_template = pg.font.SysFont('comicsansms', 60)
 game_status_template.set_bold(False)
 
 # load picture
-poff_image = pg.image.load("resource/88.jpg")
+poff_image = pg.image.load("resource/89.jpg")
 
 def update_background():
     screen.fill(BLUE)
@@ -137,7 +140,7 @@ def draw_frame_game_time(surface, t):
     
     game_time_label = game_time_template.render(t, 1 , BLACK)
     ax = (SCREEN_W/2) - game_time_label.get_width()/2
-    ay = 0
+    ay = 20
     surface.blit(game_time_label, (ax,ay))
 
 def draw_game_status(surface, status) :
@@ -186,7 +189,8 @@ def generate_tick():
 
 # set picture on power off
 def picture_poweroff(surface, image):
-    surface.blit(image, (0, 0))
+    #surface.blit(image, (0, 0))
+    surface.blit(image, image.get_rect())
     pass
 
 def display_refresh(power_state):
@@ -204,6 +208,27 @@ def display_refresh(power_state):
     pg.display.flip()
     clock.tick(60)
 
+def winner_process():
+    # winner calculate
+    if (blue_score >= GAME_POINT_VAL and (blue_score - red_score) >= 2):
+        print "game state : blue win"
+        str_game_status = "Blue Win"
+        game_state_play = GAME_PLAY_STATE_BLUE_WIN
+        game_status = GAME_STATUS_FINISH
+        is_game_done = True
+    elif (red_score >= GAME_POINT_VAL and (red_score-blue_score) >= 2) :
+        print "game state : red win"
+        str_game_status = "Red Win"
+        game_state_play = GAME_PLAY_STATE_RED_WIN
+        game_status = GAME_STATUS_FINISH
+        is_game_done = True
+    elif (red_score >= GAME_LAST_ONE and blue_score >= GAME_LAST_ONE and red_score == blue_score) :
+        print "game state : deuce"
+        game_state_play = GAME_PLAY_STATE_DEUCE
+    else :
+        #game_state_play = GAME_PLAY_STATE_RUNNING
+        #print "game state : running"
+        pass
 
 
 running = 1
@@ -220,6 +245,8 @@ while running:
             
             # display refresh
             display_refresh(power_state=power_status)
+
+             
 
             if game_status == GAME_STATUS_PLAY:
                 str_game_status = "Game : Play"
@@ -251,43 +278,55 @@ while running:
                 menit = 0
                 blue_score = 0
                 red_score = 0
+                is_game_done = False
+
             elif game_status == GAME_STATUS_PAUSE:
                 str_game_status = "Game : Pause"
-                pass
+            elif game_status == GAME_STATUS_FINISH:
+                if game_state_play == GAME_PLAY_STATE_BLUE_WIN:
+                    str_game_status = "Game : Finish (Blue win)"
+                elif game_state_play == GAME_PLAY_STATE_RED_WIN:
+                    str_game_status = "Game : Finish (Red Win)"
+        
 
             s = pylirc.nextcode(1)
             while(s):
                 for (code) in s :
                     print("Command: %s, Repeat: %d" % (code["config"], code["repeat"]))
+
+                    if is_game_done==False:
+                        if(code["config"] == "one"):
+                            if game_status==GAME_STATUS_PLAY :
+                                if red_score < GAME_SCORE_LIMIT:
+                                    red_score = red_score + 1
+                                    update_score = 1
+                        elif(code["config"] == "four"):
+                            if game_status==GAME_STATUS_PLAY:
+                                if red_score > 0 :
+                                    red_score = red_score - 1
+                                    update_score = 1
+                        elif(code["config"] == "three"):
+                            if game_status==GAME_STATUS_PLAY :
+                                if blue_score < GAME_SCORE_LIMIT :
+                                    blue_score = blue_score + 1      
+                                    update_score = 1 
+                        elif(code["config"] == "six"):
+                            if game_status==GAME_STATUS_PLAY :
+                                if blue_score > 0 :
+                                    blue_score = blue_score - 1
+                                    update_score = 1
                     
-                    if(code["config"] == "one"):
-                        if game_status==GAME_STATUS_PLAY :
-                            if red_score < GAME_SCORE_LIMIT:
-                                red_score = red_score + 1
-                                update_score = 1
-                    elif(code["config"] == "four"):
-                        if game_status==GAME_STATUS_PLAY:
-                            if red_score > 0 :
-                                red_score = red_score - 1
-                                update_score = 1
-                    elif(code["config"] == "three"):
-                        if game_status==GAME_STATUS_PLAY :
-                            if blue_score < GAME_SCORE_LIMIT :
-                                blue_score = blue_score + 1      
-                                update_score = 1 
-                    elif(code["config"] == "six"):
-                        if game_status==GAME_STATUS_PLAY :
-                            if blue_score > 0 :
-                                blue_score = blue_score - 1
-                                update_score = 1
-                    # change service position
-                    # valid on pause or stop mode
-                    elif(code["config"] == "key_left" and game_status != GAME_STATUS_PLAY):
-                        serv_pos = False
-                    elif(code["config"] == "key_right" and game_status != GAME_STATUS_PLAY):
-                        serv_pos = True
+
+                    if is_game_done ==False:
+                        # change service position
+                        # valid on pause or stop mode
+                        if(code["config"] == "key_left" and game_status != GAME_STATUS_PLAY):
+                            serv_pos = False
+                        elif(code["config"] == "key_right" and game_status != GAME_STATUS_PLAY):
+                            serv_pos = True
+
                     # game status control
-                    elif(code["config"] == "key_play"):
+                    if(code["config"] == "key_play"):
                         game_status = GAME_STATUS_PLAY
                     elif(code["config"] == "key_pause"):
                         game_status = GAME_STATUS_PAUSE
@@ -300,21 +339,26 @@ while running:
                         pass
                     
                     # winner calculate
-                    if (blue_score >= GAME_POINT_VAL and (blue_score - red_score) >= 2):
-                        print "game state : blue win"
-                        game_state_play = GAME_PLAY_STATE_BLUE_WIN
-                        is_game_done = True
-                    elif (red_score >= GAME_POINT_VAL and (red_score-blue_score) >= 2) :
-                        print "game state : red win"
-                        game_state_play = GAME_PLAY_STATE_RED_WIN
-                        is_game_done = True
-                    elif (red_score >= GAME_LAST_ONE and blue_score >= GAME_LAST_ONE and red_score == blue_score) :
-                        print "game state : deuce"
-                        game_state_play = GAME_PLAY_STATE_DEUCE
-                    else :
-                        #game_state_play = GAME_PLAY_STATE_RUNNING
-                        #print "game state : running"
-                        pass
+                    if game_status == GAME_STATUS_PLAY:
+                        if (blue_score >= GAME_POINT_VAL and (blue_score - red_score) >= 2):
+                            print "game state : blue win"
+                            #str_game_status = "Blue Win"
+                            game_state_play = GAME_PLAY_STATE_BLUE_WIN
+                            game_status = GAME_STATUS_FINISH
+                            is_game_done = True
+                        elif (red_score >= GAME_POINT_VAL and (red_score-blue_score) >= 2) :
+                            print "game state : red win"
+                            #str_game_status = "Red Win"
+                            game_state_play = GAME_PLAY_STATE_RED_WIN
+                            game_status = GAME_STATUS_FINISH
+                            is_game_done = True
+                        elif (red_score >= GAME_LAST_ONE and blue_score >= GAME_LAST_ONE and red_score == blue_score) :
+                            print "game state : deuce"
+                            game_state_play = GAME_PLAY_STATE_DEUCE
+                        else :
+                            #game_state_play = GAME_PLAY_STATE_RUNNING
+                            #print "game state : running"
+                            pass
 
                     if (not blocking):
                         s = pylirc.nextcode(1)
