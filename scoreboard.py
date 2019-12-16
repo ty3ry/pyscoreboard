@@ -6,6 +6,7 @@ import thread
 import time
 from datetime import datetime
 import pylirc
+import random
 
 # full screen option
 OPS_FULLSCREEN = True
@@ -76,6 +77,14 @@ class Scoreboard(object):
         self.game_status_template = pg.font.SysFont('comicsansms', 60)
         self.game_status_template.set_bold(False)
 
+        # set font score (universal)
+        self.score_template = pg.font.SysFont('comicsansms', 60)
+        self.score_template.set_bold(False)
+
+        # Game set number
+        self.game_set_template = pg.font.SysFont('comicsansms', 100)
+        self.game_set_template.set_bold(False)
+
         self.red_score = 0
         self.blue_score = 0
         self.game_time = 0
@@ -89,6 +98,16 @@ class Scoreboard(object):
         self.ser_pos_count = 0
         self.menit = 0
         self.detik = 0
+
+        self.score_data = {
+            "red" : 0,
+            "blue" : 0,
+            "current_set" : 1,
+            "set1_red" : 0,
+            "set1_blue" : 0,
+            "set2_red" : 0,
+            "set2_blue" : 0,
+        }
 
         if(OPS_FULLSCREEN == True) :
             self.screen = pg.display.set_mode((0,0))
@@ -108,6 +127,7 @@ class Scoreboard(object):
         self.screen.fill(BLUE)
         pg.draw.rect(self.screen, RED, (0,0,self.SCREEN_W/2, self.SCREEN_H))
         pg.draw.rect(self.screen, BLACK, (0, self.SCREEN_H-100, self.SCREEN_W, 100))
+        pg.draw.rect(self.screen, GRAY, (0, self.SCREEN_H-100, self.SCREEN_W, 100), 3)
 
     def update_red_score(self, surface, msg):
         red_score_label = self.red_score_template.render(msg, 1, WHITE)
@@ -137,9 +157,89 @@ class Scoreboard(object):
         game_status_label = self.game_status_template.render(status, 1 , WHITE)
         surface.blit(game_status_label, (ax - game_status_label.get_width() - 20, ay))
 
-    def draw_frame_match_set(self, surface):
-        pass
+    def draw_score_set(self, set):
+        xpos = 20
+        x,y = (120, self.SCREEN_H-100+2)
+        w,h = (100, (100/2)-2)
 
+        if set==1:
+            self.score_data["set1_red"] = self.red_score
+            self.score_data["set1_blue"] = self.blue_score
+        elif set==2:
+            self.score_data["set2_red"] = self.red_score
+            self.score_data["set2_blue"] = self.blue_score
+        i = 1
+        for i in range(set):
+            # set 1
+            # red score
+            print(i)
+            x = (x) + w
+            y = (self.SCREEN_H-(100/2))
+            #score_label = 0
+            if i == 0:
+                score_label = self.score_template.render(str(self.score_data["set1_red"]), 1 , WHITE)
+                self.screen.blit(score_label, (x , y))
+            elif i == 1:
+                score_label = self.score_template.render(str(self.score_data["set2_red"]), 1 , WHITE)
+                self.screen.blit(score_label, (x , y))
+
+            # blue score
+            x = (x)
+            y = (self.SCREEN_H-(100/2) - 45)
+            if i == 0:
+                score_label = self.score_template.render(str(self.score_data["set1_blue"]), 1 , WHITE)
+                self.screen.blit(score_label, (x , y))
+            elif i == 1:
+                score_label = self.score_template.render(str(self.score_data["set2_blue"]), 1 , WHITE)
+                self.screen.blit(score_label, (x , y))
+            
+        # frame set 1
+        ax,ay = (x-40, self.SCREEN_H-100)
+        aw,ah = (100,100)
+        pg.draw.rect(self.screen, YELLOW, (ax,ay,aw,ah), 4)          # red region
+
+        # game set number
+        x = (ax + 150)
+        y = (self.SCREEN_H-(100/2) - 40)
+        game_set_label = self.game_set_template.render(str(set), 1 , RED)
+        self.screen.blit(game_set_label, (x , y))
+            
+
+    def draw_frame_match_set(self, serpos, set, blue_score_set, red_score_set):
+        xpos = 0
+        x,y = (xpos,self.SCREEN_H-100)
+        w,h = ((self.SCREEN_W/2)-xpos,100)
+        pg.draw.rect(self.screen, YELLOW, (x,y,w, h), -2)     # border
+
+        x,y = (xpos+2, self.SCREEN_H-100+2)
+        w,h = (180-2, (h/2)-2)
+        pg.draw.rect(self.screen, BLUE, (x,y,w,h))           # blue region
+        x,y = (x+2, self.SCREEN_H-(100/2)+2)
+        w,h = (w-2,h-2)
+        pg.draw.rect(self.screen, RED, (x,y,w,h))          # red region
+
+        # service position
+        rad = 10        # circle radius
+        if serpos == 0:
+            pg.draw.circle(self.screen, WHITE, (40, self.SCREEN_H-30), rad)
+        else :
+            pg.draw.circle(self.screen, WHITE, (40, self.SCREEN_H-70), rad)
+        
+        # game set score -- blue
+        x = 120
+        y = (self.SCREEN_H-(100/2))
+        score_label = self.score_template.render(str(blue_score_set), 1 , YELLOW)
+        self.screen.blit(score_label, (x , y))
+
+        # red
+        x = (x)
+        y = (self.SCREEN_H-(100/2) - 45)
+        score_label = self.score_template.render(str(red_score_set), 1 , YELLOW)
+
+        self.screen.blit(score_label, (x , y))
+        self.draw_score_set(set)
+        
+        
     def update_service_pos(self, screen, pos):
         rad = 22
         if pos == False:
@@ -175,38 +275,19 @@ class Scoreboard(object):
         surface.blit(image, image.get_rect())
 
     def display_refresh(self,power_state):
-        if power_state :
+        if not power_state :
             self.update_background()
             self.update_red_score(self.screen, str(self.red_score))
             self.update_blue_score(self.screen, str(self.blue_score))
             self.draw_frame_game_time(self.screen, str(self.menit) + ":" + str(self.detik))
             self.update_service_pos(self.screen, self.serv_pos)
             self.draw_game_status(self.screen, self.str_game_status)
+            self.draw_frame_match_set(self.serv_pos, self.score_data["current_set"],self.score_data["blue"], self.score_data["red"])
         else:
             self.picture_poweroff(self.screen, self.poff_image)
         
         pg.display.flip()
         self.clock.tick(60)
-
-    def winner_process(self):
-        # winner calculate
-        if (blue_score >= GAME_POINT_VAL and (blue_score - red_score) >= 2):
-            print "game state : blue win"
-            self.str_game_status = "Blue Win"
-            self.game_state_play = GAME_PLAY_STATE_BLUE_WIN
-            self.game_status = GAME_STATUS_FINISH
-            self.is_game_done = True
-        elif (red_score >= GAME_POINT_VAL and (red_score-blue_score) >= 2) :
-            print "game state : red win"
-            self.str_game_status = "Red Win"
-            self.game_state_play = GAME_PLAY_STATE_RED_WIN
-            self.game_status = GAME_STATUS_FINISH
-            self.is_game_done = True
-        elif (red_score >= GAME_LAST_ONE and blue_score >= GAME_LAST_ONE and red_score == blue_score) :
-            print "game state : deuce"
-            self.game_state_play = GAME_PLAY_STATE_DEUCE
-        else :
-            pass
 
     def run(self):
         running = 1
@@ -256,7 +337,7 @@ class Scoreboard(object):
                     elif self.game_status == GAME_STATUS_PAUSE:
                         self.str_game_status = "Game : Pause"
                     elif self.game_status == GAME_STATUS_FINISH:
-                        if game_state_play == GAME_PLAY_STATE_BLUE_WIN:
+                        if self.game_state_play == GAME_PLAY_STATE_BLUE_WIN:
                             self.str_game_status = "Game : Finish (Blue win)"
                         elif self.game_state_play == GAME_PLAY_STATE_RED_WIN:
                             self.str_game_status = "Game : Finish (Red Win)"
@@ -301,6 +382,12 @@ class Scoreboard(object):
                             # game status control
                             if(code["config"] == "key_play"):
                                 self.game_status = GAME_STATUS_PLAY
+                                if self.game_state_play == GAME_PLAY_STATE_RED_WIN or self.game_state_play == GAME_PLAY_STATE_BLUE_WIN:
+                                    if self.score_data["current_set"] < 5 :
+                                        self.score_data["current_set"] = self.score_data["current_set"] + 1
+                                        self.blue_score = 0
+                                        self.red_score = 0
+                                    #print("set : %d " % (self.score_data["current_set"]))
                             elif(code["config"] == "key_pause"):
                                 self.game_status = GAME_STATUS_PAUSE
                             elif(code["config"] == "key_stop"):
@@ -313,7 +400,7 @@ class Scoreboard(object):
                             
                             # winner calculate
                             if self.game_status == GAME_STATUS_PLAY:
-                                if (self.blue_score >= GAME_POINT_VAL and (blue_score - red_score) >= 2):
+                                if (self.blue_score >= GAME_POINT_VAL and (self.blue_score - self.red_score) >= 2):
                                     print "game state : blue win"
                                     #str_game_status = "Blue Win"
                                     self.game_state_play = GAME_PLAY_STATE_BLUE_WIN
