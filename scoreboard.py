@@ -65,6 +65,8 @@ pg.mouse.set_visible(False)
 
 
 
+
+
 class Scoreboard(object):
     def __init__(self):
         # py lirc blocking control
@@ -139,6 +141,50 @@ class Scoreboard(object):
         self.poff_image = pg.transform.scale(self.poff_image, (self.SCREEN_W, self.SCREEN_H))
 
         self.clock = pg.time.Clock()
+        self.undo_pos= 0
+        self.database_red_score = [0] * 50
+        self.database_blue_score = [0] * 50
+        self.database_serv_pos = [0] * 50
+        self.database_red_scoreset = [0] * 50
+        self.database_blue_scoreset = [0] * 50
+
+    def undo_data_set(self, bs, rs, sp, bset, rset):
+        self.undo_pos += 1
+        self.database_blue_score[self.undo_pos] = bs
+        self.database_red_score[self.undo_pos] = rs
+        self.database_serv_pos[self.undo_pos] = sp
+        self.database_blue_scoreset[self.undo_pos] = bset
+        self.database_red_scoreset[self.undo_pos] = rset
+        
+        print("undo pos %d (bs:%d rs:%d ps:%d bset:%d rset:%d)" %(self.undo_pos, self.database_blue_score[self.undo_pos],
+                                self.database_red_score[self.undo_pos], self.database_serv_pos[self.undo_pos],
+                                self.database_blue_scoreset[self.undo_pos], self.database_blue_scoreset[self.undo_pos]))
+
+    def undo_data_get(self):
+        bs , rs , sp ,bset, rset = (0,0,0,0,0)
+
+        if self.undo_pos > 0:
+            self.undo_pos -= 1
+        bs = self.database_blue_score[self.undo_pos]
+        rs = self.database_red_score[self.undo_pos]
+        ps = self.database_serv_pos[self.undo_pos]
+        bset = self.database_blue_scoreset[self.undo_pos]
+        rset = self.database_red_scoreset[self.undo_pos]
+        
+        print("undo pos %d (bs:%d rs:%d ps:%d bset:%d rset:%d)" %(self.undo_pos, bs,rs,ps,bset, rset))
+
+        return (bs ,rs , ps, bset, rset)
+
+    def undo_data_clr(self):
+        self.undo_pos = 0
+        
+        for i in range(0, 25):
+            self.database_blue_score[i] = 0
+            self.database_red_score[i] = 0
+            self.database_serv_pos[i] = 0
+            self.database_blue_scoreset[i] = 0
+            self.database_red_scoreset[i] = 0
+        print("clear undo database")
 
     def update_background(self, TeamPos):
         if TeamPos == TEAM_POS_RED_LEFT_BLUE_RIGHT :
@@ -394,8 +440,9 @@ class Scoreboard(object):
                                         self.serv_pos = SERV_POS_RIGHT
                                     else:
                                         self.serv_pos = SERV_POS_LEFT
-                                    self.update_score = 0
+                                    #self.update_score = 0
                                     print "ganti service..."
+
                             else:
                                 if((self.blue_score + self.red_score) % 2 == 0) :
                                     if (self.serv_pos == SERV_POS_LEFT) :
@@ -403,7 +450,13 @@ class Scoreboard(object):
                                     else:
                                         self.serv_pos = SERV_POS_LEFT
                                     print "ganti service..."
-                                    self.update_score = 0
+                                    # update database
+                                    # self.undo_data_set(self.blue_score,self.red_score, self.serv_pos)
+                                    #self.update_score = 0
+                            
+                            # update database
+                            # self.undo_data_set(self.blue_score,self.red_score, self.serv_pos, self.score_data['blue'], self.score_data['red'])
+                            self.update_score = 0
                                 
                     elif self.game_status == GAME_STATUS_STOP:
                         self.str_game_status = "Game : Stop"
@@ -446,6 +499,7 @@ class Scoreboard(object):
                                                 self.blue_score = self.blue_score + 1  
                                                 print("(1)blue score : ", self.blue_score)    
                                                 self.update_score = 1
+                                        self.undo_data_set(self.blue_score,self.red_score, self.serv_pos, self.score_data['blue'], self.score_data['red'])
                                 elif(code["config"] == "four"):
                                     if self.game_status==GAME_STATUS_PLAY:
                                         if self.TeamPos == TEAM_POS_RED_LEFT_BLUE_RIGHT:
@@ -458,6 +512,7 @@ class Scoreboard(object):
                                                 self.blue_score = self.blue_score - 1
                                                 print("(4)blue score : ", self.blue_score)
                                                 self.update_score = 1
+                                        self.undo_data_set(self.blue_score,self.red_score, self.serv_pos, self.score_data['blue'], self.score_data['red'])
                                 elif(code["config"] == "three"):
                                     if self.game_status==GAME_STATUS_PLAY :
                                         if self.TeamPos == TEAM_POS_BLUE_LEFT_RED_RIGHT:
@@ -470,6 +525,7 @@ class Scoreboard(object):
                                                 self.blue_score = self.blue_score + 1   
                                                 print("(3)blue score : ", self.blue_score)   
                                                 self.update_score = 1
+                                        self.undo_data_set(self.blue_score,self.red_score, self.serv_pos, self.score_data['blue'], self.score_data['red'])
                                 elif(code["config"] == "six"):
                                     if self.game_status==GAME_STATUS_PLAY :
                                         if self.TeamPos == TEAM_POS_BLUE_LEFT_RED_RIGHT:
@@ -482,6 +538,7 @@ class Scoreboard(object):
                                                 self.blue_score = self.blue_score - 1
                                                 print("(6)blue score : ", self.blue_score)
                                                 self.update_score = 1
+                                        self.undo_data_set(self.blue_score,self.red_score, self.serv_pos, self.score_data['blue'], self.score_data['red'])
                             
 
                             if self.is_game_done ==False:
@@ -489,8 +546,10 @@ class Scoreboard(object):
                                 # valid on pause or stop mode
                                 if(code["config"] == "key_left" and self.game_status != GAME_STATUS_PLAY):
                                     self.serv_pos = SERV_POS_LEFT
+                                    self.undo_data_set(self.blue_score,self.red_score, self.serv_pos, self.score_data['blue'], self.score_data['red'])
                                 elif(code["config"] == "key_right" and self.game_status != GAME_STATUS_PLAY):
                                     self.serv_pos = SERV_POS_RIGHT  #True    # right serve
+                                    self.undo_data_set(self.blue_score,self.red_score, self.serv_pos, self.score_data['blue'], self.score_data['red'])
 
                             # game status control
                             if(code["config"] == "key_play"):
@@ -518,6 +577,8 @@ class Scoreboard(object):
                                         self.is_game_done = False
 
                                     self.game_state_play = GAME_PLAY_STATE_IDLE
+                                    # clear undo database
+                                    self.undo_data_clr()
                                     # ganti posisi
                                     #if self.score_data["current_set"] % 2 == 1:
                                     #print("set : %d " % (self.score_data["current_set"]))
@@ -525,9 +586,16 @@ class Scoreboard(object):
                                 self.game_status = GAME_STATUS_PAUSE
                             elif(code["config"] == "key_stop"):
                                 self.game_status = GAME_STATUS_STOP
+                                # clear undo database
+                                self.undo_data_clr()
                             elif(code["config"] == "key_power"):
                                 print "key power pressed"
                                 self.power_status = not self.power_status     # toggle state
+                            elif(code["config"] == "key_setup"):
+                                print "key setup pressed"
+                                (self.blue_score, self.red_score, self.serv_pos, self.score_data['blue'], self.score_data['red']) = self.undo_data_get()
+                                self.is_game_done = False
+                                self.game_status = GAME_STATUS_PLAY
                             else :
                                 pass
                             
