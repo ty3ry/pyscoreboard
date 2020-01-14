@@ -455,7 +455,7 @@ class Scoreboard(object):
                                     #self.update_score = 0
                             
                             # update database
-                            # self.undo_data_set(self.blue_score,self.red_score, self.serv_pos, self.score_data['blue'], self.score_data['red'])
+                            self.undo_data_set(self.blue_score,self.red_score, self.serv_pos, self.score_data['blue'], self.score_data['red'])
                             self.update_score = 0
                                 
                     elif self.game_status == GAME_STATUS_STOP:
@@ -499,7 +499,7 @@ class Scoreboard(object):
                                                 self.blue_score = self.blue_score + 1  
                                                 print("(1)blue score : ", self.blue_score)    
                                                 self.update_score = 1
-                                        self.undo_data_set(self.blue_score,self.red_score, self.serv_pos, self.score_data['blue'], self.score_data['red'])
+                                        #self.undo_data_set(self.blue_score,self.red_score, self.serv_pos, self.score_data['blue'], self.score_data['red'])
                                 elif(code["config"] == "four"):
                                     if self.game_status==GAME_STATUS_PLAY:
                                         if self.TeamPos == TEAM_POS_RED_LEFT_BLUE_RIGHT:
@@ -512,7 +512,7 @@ class Scoreboard(object):
                                                 self.blue_score = self.blue_score - 1
                                                 print("(4)blue score : ", self.blue_score)
                                                 self.update_score = 1
-                                        self.undo_data_set(self.blue_score,self.red_score, self.serv_pos, self.score_data['blue'], self.score_data['red'])
+                                        #self.undo_data_set(self.blue_score,self.red_score, self.serv_pos, self.score_data['blue'], self.score_data['red'])
                                 elif(code["config"] == "three"):
                                     if self.game_status==GAME_STATUS_PLAY :
                                         if self.TeamPos == TEAM_POS_BLUE_LEFT_RED_RIGHT:
@@ -525,7 +525,7 @@ class Scoreboard(object):
                                                 self.blue_score = self.blue_score + 1   
                                                 print("(3)blue score : ", self.blue_score)   
                                                 self.update_score = 1
-                                        self.undo_data_set(self.blue_score,self.red_score, self.serv_pos, self.score_data['blue'], self.score_data['red'])
+                                        #self.undo_data_set(self.blue_score,self.red_score, self.serv_pos, self.score_data['blue'], self.score_data['red'])
                                 elif(code["config"] == "six"):
                                     if self.game_status==GAME_STATUS_PLAY :
                                         if self.TeamPos == TEAM_POS_BLUE_LEFT_RED_RIGHT:
@@ -538,7 +538,7 @@ class Scoreboard(object):
                                                 self.blue_score = self.blue_score - 1
                                                 print("(6)blue score : ", self.blue_score)
                                                 self.update_score = 1
-                                        self.undo_data_set(self.blue_score,self.red_score, self.serv_pos, self.score_data['blue'], self.score_data['red'])
+                                        #self.undo_data_set(self.blue_score,self.red_score, self.serv_pos, self.score_data['blue'], self.score_data['red'])
                             
 
                             if self.is_game_done ==False:
@@ -611,6 +611,7 @@ class Scoreboard(object):
                                     self.game_state_play = GAME_PLAY_STATE_BLUE_WIN
                                     self.game_status = GAME_STATUS_FINISH
                                     self.is_game_done = True
+                                    #self.undo_data_set(self.blue_score,self.red_score, self.serv_pos, self.score_data['blue'], self.score_data['red'])
                                 elif (self.red_score >= GAME_POINT_VAL and (self.red_score-self.blue_score) >= 2) :
                                     print "game state : red win"
                                     if self.score_data['blue']+self.score_data['red'] == 5 :
@@ -621,6 +622,7 @@ class Scoreboard(object):
                                     self.game_state_play = GAME_PLAY_STATE_RED_WIN
                                     self.game_status = GAME_STATUS_FINISH
                                     self.is_game_done = True
+                                    #self.undo_data_set(self.blue_score,self.red_score, self.serv_pos, self.score_data['blue'], self.score_data['red'])
                                 elif (self.red_score >= GAME_LAST_ONE and self.blue_score >= GAME_LAST_ONE and self.red_score == self.blue_score) :
                                     print "game state : deuce"
                                     self.game_state_play = GAME_PLAY_STATE_DEUCE
