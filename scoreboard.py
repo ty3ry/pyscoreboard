@@ -479,7 +479,37 @@ class Scoreboard(object):
                             self.str_game_status = "Game : Finish (Blue win)"
                         elif self.game_state_play == GAME_PLAY_STATE_RED_WIN:
                             self.str_game_status = "Game : Finish (Red Win)"
-                
+
+
+                    # winner calculate
+                    if self.game_status == GAME_STATUS_PLAY:
+                        if (self.blue_score >= GAME_POINT_VAL and (self.blue_score - self.red_score) >= 2):
+                            print "game state : blue win"
+                            if self.score_data['blue']+self.score_data['red'] == 5 :
+                                self.game_status = GAME_STATUS_IDLE
+                            elif self.score_data['blue'] < 5 :
+                                self.score_data['blue'] = self.score_data['blue'] + 1
+                            #str_game_status = "Blue Win"
+                            self.game_state_play = GAME_PLAY_STATE_BLUE_WIN
+                            self.game_status = GAME_STATUS_FINISH
+                            self.is_game_done = True
+                            #self.undo_data_set(self.blue_score,self.red_score, self.serv_pos, self.score_data['blue'], self.score_data['red'])
+                        elif (self.red_score >= GAME_POINT_VAL and (self.red_score-self.blue_score) >= 2) :
+                            print "game state : red win"
+                            if self.score_data['blue']+self.score_data['red'] == 5 :
+                                self.game_status = GAME_STATUS_IDLE
+                            elif self.score_data['red'] < 5 :
+                                self.score_data['red'] = self.score_data['red'] + 1
+                            #str_game_status = "Red Win"
+                            self.game_state_play = GAME_PLAY_STATE_RED_WIN
+                            self.game_status = GAME_STATUS_FINISH
+                            self.is_game_done = True
+                            #self.undo_data_set(self.blue_score,self.red_score, self.serv_pos, self.score_data['blue'], self.score_data['red'])
+                        elif (self.red_score >= GAME_LAST_ONE and self.blue_score >= GAME_LAST_ONE and self.red_score == self.blue_score) :
+                            print "game state : deuce"
+                            self.game_state_play = GAME_PLAY_STATE_DEUCE
+                        else :
+                            pass
 
                     s = pylirc.nextcode(1)
                     while(s):
@@ -599,35 +629,7 @@ class Scoreboard(object):
                             else :
                                 pass
                             
-                            # winner calculate
-                            if self.game_status == GAME_STATUS_PLAY:
-                                if (self.blue_score >= GAME_POINT_VAL and (self.blue_score - self.red_score) >= 2):
-                                    print "game state : blue win"
-                                    if self.score_data['blue']+self.score_data['red'] == 5 :
-                                        self.game_status = GAME_STATUS_IDLE
-                                    elif self.score_data['blue'] < 5 :
-                                        self.score_data['blue'] = self.score_data['blue'] + 1
-                                    #str_game_status = "Blue Win"
-                                    self.game_state_play = GAME_PLAY_STATE_BLUE_WIN
-                                    self.game_status = GAME_STATUS_FINISH
-                                    self.is_game_done = True
-                                    #self.undo_data_set(self.blue_score,self.red_score, self.serv_pos, self.score_data['blue'], self.score_data['red'])
-                                elif (self.red_score >= GAME_POINT_VAL and (self.red_score-self.blue_score) >= 2) :
-                                    print "game state : red win"
-                                    if self.score_data['blue']+self.score_data['red'] == 5 :
-                                        self.game_status = GAME_STATUS_IDLE
-                                    elif self.score_data['red'] < 5 :
-                                        self.score_data['red'] = self.score_data['red'] + 1
-                                    #str_game_status = "Red Win"
-                                    self.game_state_play = GAME_PLAY_STATE_RED_WIN
-                                    self.game_status = GAME_STATUS_FINISH
-                                    self.is_game_done = True
-                                    #self.undo_data_set(self.blue_score,self.red_score, self.serv_pos, self.score_data['blue'], self.score_data['red'])
-                                elif (self.red_score >= GAME_LAST_ONE and self.blue_score >= GAME_LAST_ONE and self.red_score == self.blue_score) :
-                                    print "game state : deuce"
-                                    self.game_state_play = GAME_PLAY_STATE_DEUCE
-                                else :
-                                    pass
+                            # winner calculate before position
 
                             if (not self.blocking):
                                 s = pylirc.nextcode(1)
